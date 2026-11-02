@@ -36,10 +36,28 @@ public class AiModel implements Serializable {
     private String model_name;
 
     /**
-     * 模型编码 deepseek-r1 / qwen-max
+     * 模型平台编码：bailian / openai / zhipu ...
+     */
+    @TableField(value = "platform_code")
+    private String platform_code;
+
+    /**
+     * 模型平台展示名称
+     */
+    @TableField(value = "platform_name")
+    private String platform_name;
+
+    /**
+     * 模型编码 deepseek-r1 / qwen-max / qwen3-omni-flash
      */
     @TableField(value = "model_code")
     private String model_code;
+
+    /**
+     * 模型类型：chat / multimodal / pdf / embedding / streaming / asr
+     */
+    @TableField(value = "model_type")
+    private String model_type;
 
     /**
      * 接口地址
@@ -64,6 +82,30 @@ public class AiModel implements Serializable {
      */
     @TableField(value = "max_tokens")
     private Integer max_tokens;
+
+    /**
+     * 周期额度（usage_unit 为 tokens 时表示 token 数）
+     */
+    @TableField(value = "quota_total")
+    private Long quota_total;
+
+    /**
+     * 额度单位：tokens / times
+     */
+    @TableField(value = "usage_unit")
+    private String usage_unit;
+
+    /**
+     * 到期时间
+     */
+    @TableField(value = "expire_time")
+    private Date expire_time;
+
+    /**
+     * 是否当前使用：1是 0否（同一 model_type 仅一条为当前）
+     */
+    @TableField(value = "is_current")
+    private Integer is_current;
 
     /**
      * 状态：1启用 0停用
@@ -94,6 +136,18 @@ public class AiModel implements Serializable {
      */
     @TableField(value = "deleted")
     private Integer deleted;
+
+    /**
+     * 本月已用 token（聚合 ai_business_log，不落库）
+     */
+    @TableField(exist = false)
+    private Long used_tokens;
+
+    /**
+     * 本月调用次数（聚合 ai_business_log，不落库）
+     */
+    @TableField(exist = false)
+    private Long call_count;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
