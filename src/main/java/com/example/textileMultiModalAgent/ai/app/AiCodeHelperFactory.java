@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.beans.factory.annotation.Qualifier;
 
 @Configuration
 @Tag(name = "AiCodeHelperFactory", description = "ChatModel自定义配置")
@@ -36,6 +37,7 @@ public class AiCodeHelperFactory
     private InputGuardrail inputGuardrail;
 
     @Resource
+    @Qualifier("dynamicStreamingChatModel")
     private StreamingChatModel qwenStreamingChatModel;
 
     @Bean

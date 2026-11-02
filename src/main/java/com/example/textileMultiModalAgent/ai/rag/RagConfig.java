@@ -7,6 +7,7 @@ import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
 import dev.langchain4j.store.embedding.EmbeddingStore;
 import dev.langchain4j.store.embedding.inmemory.InMemoryEmbeddingStore;
 import jakarta.annotation.Resource;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -21,6 +22,7 @@ import org.springframework.context.annotation.Configuration;
 public class RagConfig {
 
     @Resource
+    @Qualifier("dynamicEmbeddingModel")
     private EmbeddingModel embeddingModel;
 
     /** 全局共享向量库：知识库写入与问答检索指向同一实例 */

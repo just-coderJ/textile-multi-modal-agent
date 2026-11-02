@@ -36,7 +36,7 @@ insert into sys_menu values('2001', 'Agent对话工作台','2000','1','chat','ag
 insert into sys_menu values('2002', '知识库管理','2000','2','knowledge','agent/knowledge/index','','','1',0,'C','0','0','agent:knowledge:list','book','admin',sysdate(),'',null,'RAG知识库管理');
 insert into sys_menu values('2003', '提示词模板','2000','3','prompt','agent/prompt/index','','','1',0,'C','0','0','agent:prompt:list','edit','admin',sysdate(),'',null,'系统提示词模板');
 insert into sys_menu values('2004', '向量库管理','2000','4','vector','agent/vector/index','','','1',0,'C','0','0','agent:vector:list','database','admin',sysdate(),'',null,'向量库运维');
-insert into sys_menu values('2005', '模型配置','2000','5','model','agent/model/index','','','1',0,'C','0','0','agent:model:list','cpu','admin',sysdate(),'',null,'大模型参数配置');
+insert into sys_menu values('2005', '模型管理','2000','5','model','agent/model/index','','','1',0,'C','0','0','agent:model:list','cpu','admin',sysdate(),'',null,'模型平台、额度、到期与启停管理');
 insert into sys_menu values('2006', 'AI调用日志','2000','6','agentLog','agent/log/index','','','1',0,'C','0','0','agent:log:list','log','admin',sysdate(),'',null,'AI调用审计日志');
 
 -- 按钮权限-F

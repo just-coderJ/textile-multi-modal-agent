@@ -19,6 +19,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -57,6 +58,7 @@ public class KnowledgeBaseService {
     private DocumentParseService documentParseService;
 
     @Resource
+    @Qualifier("dynamicEmbeddingModel")
     private EmbeddingModel embeddingModel;
 
     @Resource
