@@ -1,6 +1,6 @@
 # 纺织外贸多智能体运营工作台（后端）
 
-面向 **B2B 牛仔面料外贸**场景的多智能体运营工作台后端，基于 **Spring Boot 3 + LangChain4j + 通义千问（DashScope）** 构建。围绕综合问答、智能报价、竞品调研、合同合规校验、面料疵点识别、知识库管理六大业务能力，结合 RAG 检索、MCP 联网工具、多模态视觉与语音识别，为外贸业务员提供从询盘到报价、单证、质检的一站式 AI 辅助。
+面向 **B2B 牛仔面料外贸**场景的多智能体运营工作台后端，基于 **Spring Boot 3 + LangChain4j + 通义千问（DashScope）** 构建。围绕综合问答、智能报价、竞品调研、合同合规校验、面料疵点识别、后台管理六大业务能力，结合 RAG 检索、MCP 联网工具、多模态视觉与语音识别，为外贸业务员提供从询盘到报价、单证、质检的一站式 AI 辅助。
 
 > 前端仓库：[`ai-code-helper-ui`](../ai-code-helper-ui)（Vue 3 + Vite）。
 
@@ -8,15 +8,15 @@
 
 ## ✨ 核心业务功能
 
-| 业务模块 | 说明 | 入口接口 | AI 能力 |
-| --- | --- | --- | --- |
-| 💬 综合问答 | 文字 / 图片 / 文档多模态对话，SSE 流式输出，多轮记忆与会话历史 | `GET·POST /api/ai/chat` | LangChain4j AiServices + DashScope 多模态 |
-| 💰 智能报价 | 基于 ERP 布号成本，一键生成中英文报价邮件（金额零篡改） | `GET /api/erp/fabric/list`、`POST /api/quote/email` | 大模型只写文案，数字确定性计算 |
-| 🔍 竞品调研 | 按面料关键词聚合各平台竞品报价，输出对比表与报价建议 | `GET /api/research/fabric` | MCP 联网搜索（可选）+ 模型知识 |
-| 📋 合同合规校验 | 解析 txt/md/pdf 合同，逐条审查 10 类必备条款与高风险表述 | `POST /api/compliance/check` | Generator + Reflection 双轮审查 |
-| 🧵 面料疵点识别 | 视觉模型两段式检测布面疵点，输出位置/类型/严重程度 | `POST /api/fabric/defect/detect` | DashScope 多模态视觉 |
-| 📚 知识库管理 | 行业文档落 MinIO 并向量化，支持启用/停用/重索引/删除 | `/api/knowledge/**` | RAG 向量检索 |
-| 🎙️ 语音识别 | 综合问答语音输入，服务端 ASR（16k WAV → 文本） | `POST /api/ai/asr` | 百炼 paraformer |
+| 业务模块      | 说明 | 入口接口 | AI 能力                                  |
+|-----------| --- | -- |----------------------------------------|
+| 💬 综合问答   | 文字 / 图片 / 文档多模态对话，SSE 流式输出，多轮记忆与会话历史 | `GET·POST /api/ai/chat` | LangChain4j AiServices + DashScope 多模态 |
+| 💰 智能报价   | 基于 ERP 布号成本，一键生成中英文报价邮件（金额零篡改） | `GET /api/erp/fabric/list`、`POST /api/quote/email` | 大模型只写文案，数字确定性计算                        |
+| 🔍 竞品调研   | 按面料关键词聚合各平台竞品报价，输出对比表与报价建议 | `GET /api/research/fabric` | MCP 联网搜索（可选）+ 模型知识                     |
+| 📋 合同合规校验 | 解析 txt/md/pdf 合同，逐条审查 10 类必备条款与高风险表述 | `POST /api/compliance/check` | Generator + Reflection 双轮审查            |
+| 🧵 面料疵点识别 | 视觉模型两段式检测布面疵点，输出位置/类型/严重程度 | `POST /api/fabric/defect/detect` | DashScope 多模态视觉                        |
+| 📚 后台管理   | 用户角色权限、动态菜单、模型配置、调用统计、行业文档落 MinIO 向量化管理| `/api/admin/**`、`/api/knowledge/**` | RAG 向量检索 + 系统权限管控                              |
+| 🎙️ 语音识别  | 综合问答语音输入，服务端 ASR（16k WAV → 文本） | `POST /api/ai/asr` | 百炼 paraformer                          |
 
 **贯穿所有模块的三条设计原则**：
 
@@ -105,7 +105,7 @@ ai-code-helper/
 │   ├── application-local.yml     # 本地配置（含密钥，已 .gitignore，不入库）
 │   ├── system-prompt.txt         # 综合问答人设 System Prompt
 │   └── mapper/ · generator/mapper/
-├── sql/
+├── db/
 │   ├── create_table.sql          # 建表脚本
 │   └── init_data.sql             # 初始化数据
 ├── pom.xml
@@ -129,8 +129,11 @@ ai-code-helper/
 ```bash
 # 创建数据库并执行建表与初始化脚本
 mysql -u root -p -e "CREATE DATABASE \`cw-ai\` DEFAULT CHARACTER SET utf8mb4;"
-mysql -u root -p cw-ai < sql/create_table.sql
-mysql -u root -p cw-ai < sql/init_data.sql
+mysql -u root -p cw-ai < db/create_table.sql
+mysql -u root -p cw-ai < db/init_data.sql
+
+# Existing databases: add model management columns and seed rows
+mysql -u root -p cw-ai < db/model_management.sql
 ```
 
 > ⚠️ 若使用了知识库 / 面料等业务，请确认 `rag_document`、`ai_fabric_item` 等表已建（存量库需执行 `create_table.sql` 中对应的 `ALTER` 语句补列），否则相关接口会因 `BadSqlGrammar` 报 500。
