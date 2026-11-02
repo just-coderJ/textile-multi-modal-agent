@@ -1,6 +1,6 @@
 package com.example.textileMultiModalAgent.ai.model;
 
-import dev.langchain4j.community.model.dashscope.QwenChatModel;
+import com.example.textileMultiModalAgent.service.admin.ActiveModelService;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.listener.ChatModelListener;
 import jakarta.annotation.Resource;
@@ -23,13 +23,12 @@ public class QwenChatModelConfig {
     @Resource
     private ChatModelListener chatModelListener;
 
+    @Resource
+    private ActiveModelService activeModelService;
+
     @Bean
     public ChatModel myQwenChatModel() {
-        QwenChatModel build = QwenChatModel.builder()
-                .modelName(modelName)
-                .apiKey(apiKey)
-                .listeners(List.of(chatModelListener))
-                .build();
-        return build;
+        return new DynamicChatModel(modelName, apiKey,
+                List.of(chatModelListener), activeModelService);
     }
 }

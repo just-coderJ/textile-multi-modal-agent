@@ -7,6 +7,7 @@ import com.alibaba.dashscope.aigc.multimodalconversation.MultiModalConversationR
 import com.alibaba.dashscope.common.MultiModalMessage;
 import com.alibaba.dashscope.common.Role;
 import com.example.textileMultiModalAgent.service.admin.CallStatisticsService;
+import com.example.textileMultiModalAgent.service.admin.ActiveModelService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -61,6 +62,9 @@ public class AiCodeHelperHigherFactory implements AiCodeHelperHigherService {
     /** 调用统计（百炼用量落 ai_business_log，供后台 Dashboard 聚合与按用户限额） */
     @Resource
     private CallStatisticsService callStatisticsService;
+
+    @Resource
+    private ActiveModelService activeModelService;
 
     @Override
     @Tag(name = "multiModelChat", description = "多模态回复")
@@ -122,8 +126,9 @@ public class AiCodeHelperHigherFactory implements AiCodeHelperHigherService {
         contents.add(textContent);
 
         // 含 PDF 必须切 qwen3.8 系列（vl/omni 模型不收 PDF）
-        String model = hasPdf ? pdfModelName : visionModelName;
-        return stream(contents, model, sessionId, userId);
+        String modelType = hasPdf ? "pdf" : "multimodal";
+        String fallbackModel = hasPdf ? pdfModelName : visionModelName;
+        return stream(contents, modelType, fallbackModel, sessionId, userId);
     }
 
     @Override
@@ -141,20 +146,22 @@ public class AiCodeHelperHigherFactory implements AiCodeHelperHigherService {
         Map<String, Object> textContent = new HashMap<>();
         textContent.put("text", prompt == null || prompt.isBlank() ? "请总结这份文档的核心内容。" : prompt);
         contents.add(textContent);
-        return stream(contents, pdfModelName, null, null);
+        return stream(contents, "pdf", pdfModelName, null, null);
     }
 
     /** 拼装多模态消息并发起增量流式调用，Flowable 桥接 Flux 逐增量文本下发 */
     @Tag(name = "stream", description = "拼装多模态消息并发起增量流式调用")
-    private Flux<String> stream(List<Map<String, Object>> contents, String model,
+    private Flux<String> stream(List<Map<String, Object>> contents, String modelType, String fallbackModel,
                                 Long sessionId, Long userId) {
         MultiModalMessage userMessage = MultiModalMessage.builder()
                 .role(Role.USER.getValue())
                 .content(contents)
                 .build();
         try {
+            String model = activeModelService.resolveModelCode(modelType, fallbackModel);
+            String activeApiKey = activeModelService.resolveApiKey(modelType, apiKey);
             MultiModalConversationParam param = MultiModalConversationParam.builder()
-                    .apiKey(apiKey)
+                    .apiKey(activeApiKey)
                     .model(model)
                     .messages(List.of(userMessage))
                     .incrementalOutput(true) // 增量输出：每帧只含新增文本，前端可直接拼接
@@ -176,8 +183,8 @@ public class AiCodeHelperHigherFactory implements AiCodeHelperHigherService {
                     .doFinally(signal -> recordUsage(model, start, lastResult.get(), errored.get(), sessionId, userId));
         } catch (Exception e) {
             // 构造参数/发起调用阶段的同步异常（NoApiKeyException 等）转为流错误
-            log.error("多模态调用发起失败，model={}", model, e);
-            recordUsage(model, System.currentTimeMillis(), null, true, sessionId, userId);
+            log.error("多模态调用发起失败，model={}", fallbackModel, e);
+            recordUsage(fallbackModel, System.currentTimeMillis(), null, true, sessionId, userId);
             return Flux.error(e);
         }
     }

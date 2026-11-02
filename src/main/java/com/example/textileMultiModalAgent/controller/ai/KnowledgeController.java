@@ -62,7 +62,7 @@ public class KnowledgeController {
      */
     @Operation(summary = "启用或停用文档")
     @PutMapping("/{id}/enabled")
-    public Result setEnabled(@PathVariable Long id, @RequestParam("enabled") boolean enabled) {
+    public Result setEnabled(@PathVariable("id") Long id, @RequestParam("enabled") boolean enabled) {
         try {
             knowledgeBaseService.setEnabled(id, enabled);
             return Result.success();
@@ -78,7 +78,7 @@ public class KnowledgeController {
      */
     @Operation(summary = "重索引文档")
     @PostMapping("/{id}/reindex")
-    public Result reindex(@PathVariable Long id) {
+    public Result reindex(@PathVariable("id") Long id) {
         try {
             knowledgeBaseService.reindex(id);
             return Result.success();
@@ -94,7 +94,7 @@ public class KnowledgeController {
      */
     @Operation(summary = "删除文档")
     @DeleteMapping("/{id}")
-    public Result delete(@PathVariable Long id) {
+    public Result delete(@PathVariable("id") Long id) {
         try {
             knowledgeBaseService.delete(id);
             return Result.success();

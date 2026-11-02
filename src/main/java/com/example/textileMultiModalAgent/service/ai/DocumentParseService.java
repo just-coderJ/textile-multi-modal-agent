@@ -1,7 +1,13 @@
 package com.example.textileMultiModalAgent.service.ai;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
+
+import com.example.textileMultiModalAgent.common.utils.LangChain4JPOIUtils;
+import dev.langchain4j.data.document.Document;
+import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -55,7 +61,7 @@ public class DocumentParseService {
      * @return 文档文本
      * @throws IllegalArgumentException 类型不支持 / 解析失败
      */
-    public String parse(String fileName, byte[] bytes) {
+    public String parse(String fileName, byte[] bytes) throws Exception {
         String name = fileName == null ? "" : fileName.toLowerCase(Locale.ROOT);
         if (bytes == null || bytes.length == 0) {
             throw new IllegalArgumentException("文件内容为空");
@@ -66,7 +72,12 @@ public class DocumentParseService {
         if (name.endsWith(".txt") || name.endsWith(".md")) {
             return new String(bytes, StandardCharsets.UTF_8);
         }
-        throw new IllegalArgumentException("仅支持 .txt / .md / .pdf 文件");
+        if (name.endsWith(".doc") || name.endsWith(".docx")) {
+            InputStream inputStream = new ByteArrayInputStream(bytes);
+            Document document = LangChain4JPOIUtils.parseWord(inputStream, name);
+            return document.text();
+        }
+        throw new IllegalArgumentException("仅支持 .txt / .doc / .docx / .md / .pdf 文件");
     }
 
     /** PDF 文本层抽取；扫描件无文本层时给出明确指引 */

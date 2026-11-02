@@ -8,6 +8,7 @@ import com.alibaba.dashscope.common.MultiModalMessage;
 import com.alibaba.dashscope.common.Role;
 import com.example.textileMultiModalAgent.common.core.AiJson;
 import com.example.textileMultiModalAgent.service.admin.CallStatisticsService;
+import com.example.textileMultiModalAgent.service.admin.ActiveModelService;
 import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.annotation.Resource;
 import java.util.List;
@@ -38,6 +39,9 @@ public class FabricAgent extends BizAgent {
     /** 调用统计（百炼用量落 ai_business_log，供后台 Dashboard 聚合） */
     @Resource
     private CallStatisticsService callStatisticsService;
+
+    @Resource
+    private ActiveModelService activeModelService;
 
     private static final String GATE_PROMPT = """
             你是纺织品检验专家。请判断图片是否为面料/纺织品（梭织、针织、牛仔、印花布等）的实物特写照片。
@@ -76,14 +80,16 @@ public class FabricAgent extends BizAgent {
     /** 同步多模态调用：一张图 + 一段指令，返回模型全文文本；耗时与 token 用量落调用统计 */
     private String callVision(String dataUri, String prompt) throws Exception {
         long start = System.currentTimeMillis();
+        String model = activeModelService.resolveModelCode("multimodal", visionModelName);
+        String activeApiKey = activeModelService.resolveApiKey("multimodal", apiKey);
         List<Map<String, Object>> contents = List.of(Map.of("image", dataUri), Map.of("text", prompt));
         MultiModalMessage userMessage = MultiModalMessage.builder()
                 .role(Role.USER.getValue())
                 .content(contents)
                 .build();
         MultiModalConversationParam param = MultiModalConversationParam.builder()
-                .apiKey(apiKey)
-                .model(visionModelName)
+                .apiKey(activeApiKey)
+                .model(model)
                 .messages(List.of(userMessage))
                 .incrementalOutput(false) // 非流式：单帧返回全文，便于 JSON 解析
                 .build();
@@ -91,16 +97,16 @@ public class FabricAgent extends BizAgent {
         try {
             result = new MultiModalConversation().call(param);
         } catch (Exception e) {
-            recordUsage(start, null, null, false);
+            recordUsage(model, start, null, null, false);
             throw e;
         }
         if (result == null || result.getOutput() == null) {
-            recordUsage(start, null, null, false);
+            recordUsage(model, start, null, null, false);
             throw new IllegalStateException("视觉模型返回空结果");
         }
         List<MultiModalConversationOutput.Choice> choices = result.getOutput().getChoices();
         if (choices == null || choices.isEmpty() || choices.get(0).getMessage() == null) {
-            recordUsage(start, null, null, false);
+            recordUsage(model, start, null, null, false);
             throw new IllegalStateException("视觉模型返回空 choices");
         }
         StringBuilder text = new StringBuilder();
@@ -112,14 +118,14 @@ public class FabricAgent extends BizAgent {
         }
         Integer in = result.getUsage() == null ? null : result.getUsage().getInputTokens();
         Integer out = result.getUsage() == null ? null : result.getUsage().getOutputTokens();
-        recordUsage(start, in, out, true);
+        recordUsage(model, start, in, out, true);
         return text.toString();
     }
 
     /** 视觉调用用量落库；统计失败仅记日志，不影响检测结果 */
-    private void recordUsage(long start, Integer in, Integer out, boolean success) {
+    private void recordUsage(String model, long start, Integer in, Integer out, boolean success) {
         try {
-            callStatisticsService.recordModelCall("面料疵点检测", visionModelName,
+            callStatisticsService.recordModelCall("面料疵点检测", model,
                     System.currentTimeMillis() - start, in, out, success);
         } catch (Exception e) {
             log.warn("记录面料视觉调用统计失败", e);
