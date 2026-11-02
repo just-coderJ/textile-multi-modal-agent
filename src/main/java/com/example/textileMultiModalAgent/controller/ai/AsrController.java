@@ -5,6 +5,7 @@ import com.alibaba.dashscope.audio.asr.recognition.RecognitionParam;
 import com.example.textileMultiModalAgent.common.core.AiJson;
 import com.example.textileMultiModalAgent.common.core.Result;
 import com.example.textileMultiModalAgent.service.admin.CallStatisticsService;
+import com.example.textileMultiModalAgent.service.admin.ActiveModelService;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -47,6 +48,9 @@ public class AsrController {
     @Resource
     private CallStatisticsService callStatisticsService;
 
+    @Resource
+    private ActiveModelService activeModelService;
+
     @Operation(summary = "语音转文字", description = "上传 wav 音频（16k 单声道），返回识别文本")
     @PostMapping("/asr")
     public Result asr(@RequestParam("file") MultipartFile file) {
@@ -58,17 +62,19 @@ public class AsrController {
         try {
             temp = File.createTempFile("asr-", ".wav");
             file.transferTo(temp);
+            String model = activeModelService.resolveModelCode("asr", asrModelName);
+            String activeApiKey = activeModelService.resolveApiKey("asr", apiKey);
             RecognitionParam param = RecognitionParam.builder()
-                    .model(asrModelName)
+                    .model(model)
                     .format("wav")
                     .sampleRate(16000)
-                    .apiKey(apiKey)
+                    .apiKey(activeApiKey)
                     .build();
             // 同步整段识别：SDK 返回聚合结果 JSON（含 sentences 数组），
             // 需抽取每句 text 拼接为纯文本；旧版直出纯文本时降级原样返回
             String raw = new Recognition().call(param, temp);
             String text = extractAsrText(raw);
-            callStatisticsService.recordModelCall("语音识别", asrModelName,
+            callStatisticsService.recordModelCall("语音识别", model,
                     System.currentTimeMillis() - start, null, null, true);
             return Result.success(Map.of("text", text == null ? "" : text));
         } catch (Exception e) {
