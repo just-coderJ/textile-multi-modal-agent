@@ -14,6 +14,8 @@
  Date: 26/11/2026 16:05:24
 */
 
+USE `cw-ai`;
+
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
