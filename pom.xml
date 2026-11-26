@@ -204,7 +204,7 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <version>${spring-boot.version}</version>
                 <configuration>
-                    <mainClass>com.example.aicodehelper.TextileMultiModalAgentApplication</mainClass>
+                    <mainClass>com.example.textileMultiModalAgent.TextileMultiModalAgentApplication</mainClass>
                 </configuration>
                 <executions>
                     <execution>
