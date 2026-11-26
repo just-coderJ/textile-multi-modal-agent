@@ -1,6 +1,6 @@
 package com.example.aicodehelper;
 
-import com.example.aicodehelper.ai.app.AiDemo;
+import com.example.textileMultiModalAgent.ai.app.AiDemo;
 import dev.langchain4j.data.message.ImageContent;
 import dev.langchain4j.data.message.TextContent;
 import dev.langchain4j.data.message.UserMessage;

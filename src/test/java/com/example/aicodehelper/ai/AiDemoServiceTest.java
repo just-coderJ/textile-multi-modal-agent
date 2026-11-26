@@ -1,6 +1,6 @@
 package com.example.aicodehelper.ai;
 
-import com.example.aicodehelper.ai.app.AiCodeHelperService;
+import com.example.textileMultiModalAgent.ai.app.AiCodeHelperService;
 import dev.langchain4j.service.Result;
 import jakarta.annotation.Resource;
 import org.junit.jupiter.api.Test;

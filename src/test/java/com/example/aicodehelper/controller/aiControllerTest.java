@@ -1,6 +1,6 @@
 package com.example.aicodehelper.controller;
 
-import com.example.aicodehelper.controller.ai.AiQAController;
+import com.example.textileMultiModalAgent.controller.ai.AiQAController;
 import jakarta.annotation.Resource;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -19,7 +19,7 @@ class AiControllerTest {
     @Test
     void chatWithServerSentEvent() {
         // 1.测试Listener
-        Flux<ServerSentEvent<String>> userMessage = aiQAController.chat(12, "Hi");
+        Flux<ServerSentEvent<String>> userMessage = aiQAController.chat(12, "Hi", null);
         // 2.输出
         System.out.println(userMessage);
     }
