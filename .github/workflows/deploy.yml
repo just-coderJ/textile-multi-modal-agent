@@ -53,7 +53,7 @@ jobs:
             # 将传过来的 jar 包移动到后端目录（为了让 docker-compose.yml 里的 build 能找到文件）
             # ⚠️ 注意：如果 scp 传上去的 jar 包路径很深，这里可能需要调整 mv 的源路径
             # 假设 jar 包被传到了 textile-multi-modal-agent/target/ 下
-            if [ -d target" ]; then
+            if [ -d "target" ]; then
               mv target/*.jar ./backend/app.jar
             fi
             
