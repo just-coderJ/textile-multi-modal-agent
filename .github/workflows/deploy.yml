@@ -25,7 +25,6 @@ jobs:
       # 3. 编译后端打包 Jar
       - name: Build Backend
         run: |
-          cd textile-multi-modal-agent
           mvn clean package -DskipTests
 
       # 4. 将 Jar 包和 docker-compose.yml 传到服务器
@@ -37,7 +36,7 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT }}
           # source 是 GitHub 服务器上的相对路径
-          source: "textile-multi-modal-agent/target/*.jar,docker-compose.yml"
+          source: "target/*.jar,docker-compose.yml"
           target: "/root/textile-agent/"
 
       # 5. 在服务器上执行重启脚本
@@ -54,8 +53,8 @@ jobs:
             # 将传过来的 jar 包移动到后端目录（为了让 docker-compose.yml 里的 build 能找到文件）
             # ⚠️ 注意：如果 scp 传上去的 jar 包路径很深，这里可能需要调整 mv 的源路径
             # 假设 jar 包被传到了 textile-multi-modal-agent/target/ 下
-            if [ -d "textile-multi-modal-agent/target" ]; then
-              mv textile-multi-modal-agent/target/*.jar ./backend/app.jar
+            if [ -d target" ]; then
+              mv target/*.jar ./backend/app.jar
             fi
             
             # 执行我们写好的启动脚本
