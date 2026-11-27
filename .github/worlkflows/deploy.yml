@@ -1,34 +1,33 @@
-name: Deploy
+name: Deploy Backend
 
-om:
+on:
   push:
-    branches: ["main"] # 只有推送main分支才触发
+    branches: [ "main", "master" ]  # 无论你主分支叫 main 还是 master 都能触发
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. 把代码拉到 Github 服务器上
-      - name: Checkout code
+      # 1. 拉取代码到 GitHub 服务器
+      - name: Checkout Code
         uses: actions/checkout@v3
 
-      # 2. 编译前端
-      - name: Build Frontend
-        run: |
-          cd textile-multi-modal-agent/frontend
-          npm install
-          npm run build
-          # 把编译好的文件打个压缩包，方便传给服务器
-          tar -czf ../frontend-dist.tar.gz ./dist
+      # 2. 配置 Java 环境 (根据你的项目选 17 或 21)
+      - name: Set up JDK 21
+        uses: actions/setup-java@v3
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
 
-      # 3. 编译后端 (需要 Java 17 或 21)
+      # 3. 编译后端打包 Jar
       - name: Build Backend
         run: |
           cd textile-multi-modal-agent
           mvn clean package -DskipTests
-          
-      # 4. 把编译好的前、后端文件和 docker-compose.yml 传到服务器
+
+      # 4. 将 Jar 包和 docker-compose.yml 传到服务器
       - name: Copy files to Server
         uses: appleboy/scp-action@master
         with:
@@ -36,10 +35,11 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT }}
-          source: "frontend-dist.tar.gz,textile-multi-modal-agent/target/*.jar,docker-compose.yml"
+          # source 是 GitHub 服务器上的相对路径
+          source: "textile-multi-modal-agent/target/*.jar,docker-compose.yml"
           target: "/root/textile-agent/"
 
-      # 5. 在服务器上执行解压、改名、构建镜像等收尾工作
+      # 5. 在服务器上执行重启脚本
       - name: Execute Deployment on Server
         uses: appleboy/ssh-action@master
         with:
@@ -50,11 +50,12 @@ jobs:
           script: |
             cd /root/textile-agent
             
-            # 解压前端代码，覆盖旧文件
-            tar -xzf frontend-dist.tar.gz -C ./frontend --strip-components=1
-            
-            # 把后端编译好的 jar 包，挪到后端的 build 目录
-            mv textile-multi-modal-agent/target/*.jar ./backend/app.jar
+            # 将传过来的 jar 包移动到后端目录（为了让 docker-compose.yml 里的 build 能找到文件）
+            # ⚠️ 注意：如果 scp 传上去的 jar 包路径很深，这里可能需要调整 mv 的源路径
+            # 假设 jar 包被传到了 textile-multi-modal-agent/target/ 下
+            if [ -d "textile-multi-modal-agent/target" ]; then
+              mv textile-multi-modal-agent/target/*.jar ./backend/app.jar
+            fi
             
             # 执行我们写好的启动脚本
             ./deploy.sh
