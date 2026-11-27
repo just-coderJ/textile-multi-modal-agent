@@ -3,6 +3,7 @@ name: Deploy Backend
 on:
   push:
     branches: [ "main", "master" ]  # 无论你主分支叫 main 还是 master 都能触发
+    workflow_dispatch: # 加上这一行，就可以在网页上手动点按钮运行了
 
 jobs:
   build-and-deploy:
